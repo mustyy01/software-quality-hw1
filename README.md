@@ -1,4 +1,4 @@
-# Software Quality Standards HW-2: Containerize a Small App
+# Software Quality Standards HW-1: Containerize a Small App
 
 A small Flask web application packaged with Docker. It demonstrates pinned dependency versions, a cache-friendly Dockerfile, a non-root runtime user, a health check, and a documented clean build/run workflow.
 
