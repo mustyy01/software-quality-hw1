@@ -1,8 +1,9 @@
 import os
 from flask import Flask, jsonify, render_template_string
-
+import redis 
 app = Flask(__name__)
-
+redis_host = os.environ.get("REDIS_HOST", "localhost")
+redis_client = redis.Redis(host=redis_host, port=6379, decode_responses=True)
 HTML = """<!doctype html>
 <html lang="en">
 <head>
@@ -38,7 +39,13 @@ def index():
 @app.get("/health")
 def health():
     return jsonify(status="ok"), 200
-
+@app.get("/visits")
+def visits():
+    try:
+        count = redis_client.incr("visits")
+        return jsonify(visits=count), 200
+    except redis.RedisError:
+        return jsonify(error="Redis is unavailable"), 503
 if __name__ == "__main__":
     # Useful for local development. Production container uses Gunicorn.
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=False)
