@@ -1,119 +1,89 @@
-# Software Quality Standards HW-1: Containerize a Small App
+Software Quality Standards HW-2: Flask and Redis with Docker Compose
 
-A small Flask web application packaged with Docker. It demonstrates pinned dependency versions, a cache-friendly Dockerfile, a non-root runtime user, a health check, and a documented clean build/run workflow.
+Project Overview
 
-## Requirements
+This project is a small Flask web application that uses Redis to keep track of how many times the /visits page has been opened.
 
-- Git
-- Docker Engine or Docker Desktop
-- Python 3.12+ (only needed to run tests outside Docker)
+Docker Compose runs the Flask application and Redis together. Redis stores the visit counter in a persistent Docker volume so the data is not lost when the containers are stopped and removed normally.
 
-## Project structure
+Requirements
 
-```text
-.
-├── app.py
-├── requirements.txt
-├── Dockerfile
-├── .dockerignore
-├── .gitignore
-├── .env.example
-├── README.md
-└── tests/
-    └── test_app.py
-```
+* Docker Desktop or Docker Engine with Docker Compose
+* Git
 
-## Build the image
+Project Files
 
-From the repository root:
+* app.py — Flask application and Redis connection
+* Dockerfile — Instructions for building the Flask container
+* compose.yaml — Starts the Flask and Redis services
+* requirements.txt — Python dependencies
+* tests/test_app.py — Application tests
+* ANSWERS.md — Three short written answers
+* .dockerignore — Excludes unnecessary files from the Docker build
+* .env.example — Example environment configuration
 
-```bash
-docker build --no-cache -t software-quality-flask:1.0.0 .
-```
+How to Run the Application
 
-The Python base image and Python packages are version-pinned. The Dockerfile installs dependencies before copying the application source so source-only changes can reuse the dependency layer.
+Open a terminal in the project folder.
 
-## Run the container
+Build and start both services using one command:
 
-```bash
-docker run --detach --name software-quality-flask --publish 5000:5000 software-quality-flask:1.0.0
-```
+docker compose up -d --build
 
-Open <http://localhost:5000> in a browser. The health endpoint is <http://localhost:5000/health> and should return:
+Docker Compose starts the Flask application and Redis.
 
-```json
-{"status":"ok"}
-```
+Open the following pages in your browser:
 
-Check container status and health:
+* http://localhost:5000/ — Home page
+* http://localhost:5000/health — Application health check
+* http://localhost:5000/visits — Redis visit counter
 
-```bash
-docker ps
-docker inspect --format='{{.State.Health.Status}}' software-quality-flask
-docker logs software-quality-flask
-```
+Refresh the /visits page to increase the counter.
 
-Stop and remove the container:
+Check Container Status
 
-```bash
-docker stop software-quality-flask
-docker rm software-quality-flask
-```
+Run:
 
-## Run tests locally
+docker compose ps
 
-Create and activate a virtual environment, then install the pinned requirements:
+This displays the running Flask and Redis containers.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+Data Persistence
+
+The Redis visit counter is stored in a named Docker volume.
+
+Stop and remove the containers using:
+
+docker compose down
+
+Restart the application:
+
+docker compose up -d
+
+Open /visits again. The counter should continue increasing rather than starting from zero.
+
+Do not use docker compose down -v when you want to preserve the stored data. The -v option removes the project’s named volumes.
+
+Security and Reproducibility
+
+The Flask application runs as a non-root user inside its Docker container.
+
+The Docker configuration uses pinned image versions rather than relying on the latest tag. This helps make builds more predictable.
+
+Running Tests
+
+Activate the project’s Python virtual environment and install the dependencies.
+
+Then run:
+
 python -m unittest discover -s tests -v
-```
 
-On Windows PowerShell, activate the environment with:
+Stopping the Application
 
-```powershell
-.venv\Scripts\Activate.ps1
-```
+To stop and remove the running containers while keeping the persistent Redis volume:
 
-## Verify the security requirements
+docker compose down
 
-Confirm the container uses a non-root user:
+Written Answers
 
-```bash
-docker exec software-quality-flask id
-```
-
-The output should show UID `10001`, not UID `0`. (Run this before stopping/removing the container.)
-
-Check the image configuration:
-
-```bash
-docker image inspect software-quality-flask:1.0.0 --format='User={{.Config.User}}'
-```
-
-Expected output: `User=10001:10001`.
-
-No credentials or API keys are needed. Do not commit real `.env` files, private keys, access tokens, or passwords.
-
-## Clean-clone verification
-
-To test the repository as a marker might:
-
-```bash
-git clone <YOUR_REPOSITORY_URL> clean-check
-cd clean-check
-docker build --no-cache -t software-quality-flask:1.0.0 .
-docker run --detach --name software-quality-flask --publish 5000:5000 software-quality-flask:1.0.0
-```
-
-Then visit `http://localhost:5000` and `http://localhost:5000/health`. Replace `<YOUR_REPOSITORY_URL>` with your actual Git repository URL.
-
-## Notes on data persistence
-
-This demo does not store user data. In a stateful application, data that must survive container removal should be stored in a Docker volume, a host bind mount, or an external database with suitable backups.
-
-## Reproducibility note
-
-Image tags and package versions are pinned to explicit versions rather than `latest`. For stronger supply-chain reproducibility, a deployment can pin the base image by its verified digest and use a generated, audited dependency lock file.
+The three short written answers are included in ANSWERS.md.
