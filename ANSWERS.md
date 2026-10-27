@@ -1,10 +1,17 @@
-# Three short written answers
+Homework 2 — Written Answers
 
-1. **Why did you put the instructions in this order?**  
-   The Dockerfile installs dependencies before copying the application source. Since dependency files change less frequently than source code, Docker can reuse the dependency layer when only the source changes. This cache-friendly order reduces unnecessary work and speeds up rebuilds.
+1. Your app calls the second service by name. How does that work, and why does the same name not work between two containers on the default Docker bridge network?
 
-2. **What happens to your data when the container is removed, and how would you keep it?**  
-   Data stored only in a container's writable filesystem is lost when the container is removed. I would preserve it with a Docker volume or bind mount, or store important application data in an external database with backups. This demo itself does not persist user data.
+My Flask app connects to Redis using the name redis because Docker Compose puts both services on the same network. Docker automatically helps the app find Redis using that name instead of an IP address. On the default Docker bridge network, containers cannot automatically find each other by name like this unless extra configuration is used.
 
-3. **Why is the `latest` tag a risk?**  
-   The `latest` tag can point to different image versions at different times, so a rebuild may unexpectedly use changed software and behave differently. Pinning an explicit version, or a verified image digest for stronger reproducibility, makes builds more predictable.
+2. Which of your services is stateless and which is not? Show the evidence: what did you do, and what happened to your data?
+
+My Flask app is stateless because it does not save the visit counter inside its own container. Redis is stateful because it stores the counter. I tested this by increasing the counter, stopping the containers with docker compose down, and starting them again. The counter continued from its previous value because Redis uses a named Docker volume. When the volume is removed using docker compose down -v, the saved counter is deleted.
+
+3. Where should a database password come from, and why is it a problem to commit it to Git, even in a private repository?
+
+A database password should come from an environment variable or a secret management system instead of being written directly in the code. It is not safe to commit passwords to Git because someone could access them through the repository or its history. Even if the repository is private, the password could still be exposed if access is shared or the repository becomes public.
+
+How I Used AI Assistance
+
+I used ChatGPT to help me understand the Docker Compose requirements and guide me through the setup and testing process. I also used it to help explain some concepts, while checking the application and its results myself.
